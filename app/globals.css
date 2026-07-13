@@ -1,13 +1,102 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* invoice-sheet tokens — used only by the fixed tax-invoice template, do not restyle */
+  --brand-blue: #1656c7;
+  --tax-blue: #29abe2;
+
+  /* app-chrome tokens — the surrounding tool UI */
+  --canvas: #f6f6f4;
+  --surface: #ffffff;
+  --ink: #16181d;
+  --ink-muted: #6b7280;
+  --ink-faint: #9a9a94;
+  --line: #e7e7e2;
+  --field-bg: #f0f0ed;
+  --field-bg-hover: #e9e9e5;
+  --panel-tint: #fafaf8;
+  --accent: #1656c7;
+  --accent-soft: #eaf0fc;
+  --danger: #b33a2e;
+  --danger-soft: #fbeae7;
+  --btn-primary-bg: #16181d;
+  --btn-primary-bg-hover: #000000;
+  --btn-primary-fg: #ffffff;
+  --sheet-ring: transparent;
+  --radius: 10px;
+  --radius-sm: 7px;
+
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --border-color: var(--line);
+
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --canvas: #121214;
+    --surface: #1b1c1f;
+    --ink: #ececea;
+    --ink-muted: #9a9ea6;
+    --ink-faint: #6b6e74;
+    --line: #2c2d31;
+    --field-bg: #202124;
+    --field-bg-hover: #292a2e;
+    --panel-tint: #1a1b1e;
+    --accent: #5b93e8;
+    --accent-soft: #1c2942;
+    --danger: #e0685a;
+    --danger-soft: #3a201d;
+    --btn-primary-bg: #ececea;
+    --btn-primary-bg-hover: #ffffff;
+    --btn-primary-fg: #16171a;
+    --sheet-ring: rgba(255, 255, 255, 0.08);
+
+    color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --canvas: #121214;
+  --surface: #1b1c1f;
+  --ink: #ececea;
+  --ink-muted: #9a9ea6;
+  --ink-faint: #6b6e74;
+  --line: #2c2d31;
+  --field-bg: #202124;
+  --field-bg-hover: #292a2e;
+  --panel-tint: #1a1b1e;
+  --accent: #5b93e8;
+  --accent-soft: #1c2942;
+  --danger: #e0685a;
+  --danger-soft: #3a201d;
+  --btn-primary-bg: #ececea;
+  --btn-primary-bg-hover: #ffffff;
+  --btn-primary-fg: #16171a;
+  --sheet-ring: rgba(255, 255, 255, 0.08);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --canvas: #f6f6f4;
+  --surface: #ffffff;
+  --ink: #16181d;
+  --ink-muted: #6b7280;
+  --ink-faint: #9a9a94;
+  --line: #e7e7e2;
+  --field-bg: #f0f0ed;
+  --field-bg-hover: #e9e9e5;
+  --panel-tint: #fafaf8;
+  --accent: #1656c7;
+  --accent-soft: #eaf0fc;
+  --danger: #b33a2e;
+  --danger-soft: #fbeae7;
+  --btn-primary-bg: #16181d;
+  --btn-primary-bg-hover: #000000;
+  --btn-primary-fg: #ffffff;
+  --sheet-ring: transparent;
+
+  color-scheme: light;
 }
 
 html {
@@ -26,9 +115,11 @@ body {
   flex-direction: column;
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 * {
@@ -42,8 +133,212 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+button {
+  font-family: inherit;
+}
+
+.tabularNums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* shared form field system — used by page.tsx, ItemEditor, ClientManager */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.field input,
+.field textarea,
+.field select {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--field-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--ink);
+  width: 100%;
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:hover,
+.field textarea:hover,
+.field select:hover {
+  background: var(--field-bg-hover);
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-soft);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ink-faint);
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.fieldRow3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.fieldRow4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 480px) {
+  .fieldRow3,
+  .fieldRow4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* shared buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+}
+
+.btnBlock {
+  width: 100%;
+}
+
+.btnPrimary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.btnPrimary:hover {
+  background: var(--btn-primary-bg-hover);
+}
+
+.btnGhost {
+  background: var(--field-bg);
+  color: var(--ink);
+}
+
+.btnGhost:hover {
+  background: var(--field-bg-hover);
+}
+
+.btnAccentText {
+  background: none;
+  color: var(--accent);
+  padding: 6px 8px;
+}
+
+.btnAccentText:hover {
+  background: var(--accent-soft);
+}
+
+.btnDangerText {
+  background: none;
+  color: var(--danger);
+  padding: 6px 8px;
+}
+
+.btnDangerText:hover {
+  background: var(--danger-soft);
+}
+
+.btn:focus-visible,
+.field input:focus-visible,
+.field textarea:focus-visible,
+.field select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* section headings used throughout the form panel */
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.hairline {
+  border: none;
+  height: 1px;
+  background: var(--line);
+}
+
+@media print {
+  .app-chrome {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  .sheet-wrap {
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .invoice-sheet {
+    box-shadow: none !important;
+    margin: 0 !important;
+    /* @page now supplies the 10mm/11mm inset on every page (not just the
+       first), so the sheet's own padding/width/min-height — sized for the
+       on-screen single-page preview — must get out of the way in print. */
+    width: auto !important;
+    min-height: 277mm !important; /* 297mm page - 10mm top - 10mm bottom @page margin */
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm 11mm;
   }
 }

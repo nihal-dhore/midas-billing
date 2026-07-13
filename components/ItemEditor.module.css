@@ -1,0 +1,21 @@
+.card {
+  border: 1px solid var(--line);
+  background: var(--panel-tint);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardTitle {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--ink);
+}
