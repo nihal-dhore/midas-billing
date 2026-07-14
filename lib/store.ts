@@ -1,9 +1,8 @@
-import { Bill, Client } from "./types";
+import { Bill } from "./types";
 
 export type Theme = "light" | "dark";
 
 const KEYS = {
-  clients: "midas.clients",
   lastSerial: "midas.lastSerial",
   draft: "midas.draft",
   theme: "midas.theme",
@@ -31,14 +30,6 @@ function writeJson<T>(key: string, value: T): void {
   } catch {
     // localStorage unavailable (private browsing quota, etc.) - fail silently
   }
-}
-
-export function loadClients(): Client[] {
-  return readJson<Client[]>(KEYS.clients, []);
-}
-
-export function saveClients(clients: Client[]): void {
-  writeJson(KEYS.clients, clients);
 }
 
 export function loadLastSerial(): number {

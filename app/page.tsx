@@ -8,8 +8,6 @@ import ClientManager from "@/components/ClientManager";
 import { Bill, Client, TaxMode, emptyBill, newBillItem } from "@/lib/types";
 import { calcBillTotals, fmtInr, fyPrefix } from "@/lib/money";
 import {
-  loadClients,
-  saveClients,
   loadDraft,
   saveDraft,
   loadLastSerial,
@@ -36,6 +34,7 @@ function suggestInvoiceNo(dateIso: string, lastSerial: number): string {
 export default function Home() {
   const [ready, setReady] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [clientsError, setClientsError] = useState("");
   const [lastSerial, setLastSerial] = useState(0);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [bill, setBill] = useState<Bill>(emptyBill());
@@ -44,11 +43,15 @@ export default function Home() {
 
   const previewScrollRef = useRef<HTMLDivElement>(null);
 
-  // initial load from localStorage (client-only)
+  // initial load: clients from the server (shared across devices), the rest
+  // stays in localStorage (draft-in-progress bill, invoice serial, theme)
   useEffect(() => {
-    const storedClients = loadClients();
+    fetch("/api/clients")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setClients(data.clients))
+      .catch(() => setClientsError("Couldn't load saved clients. Try reloading."));
+
     const storedSerial = loadLastSerial();
-    setClients(storedClients);
     setLastSerial(storedSerial);
 
     const draft = loadDraft();
@@ -104,8 +107,23 @@ export default function Home() {
   }, [ready]);
 
   function updateClients(next: Client[]) {
+    const prev = clients;
     setClients(next);
-    saveClients(next);
+    setClientsError("");
+    fetch("/api/clients", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clients: next }),
+    }).then((res) => {
+      if (res.ok) return;
+      setClients(prev);
+      setClientsError("Couldn't save — change reverted. Try again.");
+    });
+  }
+
+  async function handleLogout() {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login";
   }
 
   function handleSelectClient(id: string) {
@@ -191,14 +209,20 @@ export default function Home() {
           <div className={styles.topbarTitle}>Midas Publicity</div>
           <div className={styles.topbarSubtitle}>Generate tax invoices, preview live, download as A4 PDF</div>
         </div>
-        <button type="button" className="btn btnGhost" onClick={toggleTheme}>
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
+        <div className={styles.topbarActions}>
+          <button type="button" className="btn btnGhost" onClick={toggleTheme}>
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+          <button type="button" className="btn btnGhost" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
       </div>
 
       <div className={styles.layout}>
         <div className={`${styles.formPanel} app-chrome`}>
           <ClientManager clients={clients} onSave={updateClients} />
+          {clientsError && <p className={styles.clientsError}>{clientsError}</p>}
 
           <div className={styles.section}>
             <p className="eyebrow">Bill to</p>
