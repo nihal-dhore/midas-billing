@@ -104,7 +104,7 @@ export default function ItemEditor({ item, index, templates, onChange, onRemove,
         />
       </div>
 
-      <div className="fieldRow4">
+      <div className="fieldRow3">
         <div className="field">
           <label htmlFor={fid("periodFrom")}>Period from</label>
           <input
@@ -128,23 +128,6 @@ export default function ItemEditor({ item, index, templates, onChange, onRemove,
             min={item.periodFrom || undefined}
             value={item.periodTo}
             onChange={(e) => patchAndRebuildPeriod({ periodTo: e.target.value })}
-          />
-        </div>
-        <div className="field">
-          <label htmlFor={fid("months")}>Months</label>
-          <input
-            id={fid("months")}
-            name="months"
-            type="number"
-            step="0.5"
-            min="0"
-            value={item.months}
-            onChange={(e) => {
-              const months = parseFloat(e.target.value) || 0;
-              const next = { ...item, months, amount: round2(item.rate * months) };
-              next.periodLabel = buildPeriodLabel(next.periodFrom, next.periodTo, months);
-              onChange(next);
-            }}
           />
         </div>
         <div className="field">

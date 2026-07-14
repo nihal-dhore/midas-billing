@@ -106,10 +106,35 @@ export function monthsLabel(months: number): string {
   return `${months} months`;
 }
 
-// Builds "01.04.2026 to 30.04.2026 (one month)" from period bounds + months count
+// Inclusive day count between two ISO dates (both endpoints counted), e.g.
+// 01.08.2026 to 20.08.2026 = 20 days.
+export function daysBetweenInclusive(fromIso: string, toIso: string): number {
+  const from = new Date(fromIso + "T00:00:00");
+  const to = new Date(toIso + "T00:00:00");
+  return Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
+}
+
+// Builds "01.04.2026 to 30.04.2026 (one month)" from period bounds + months
+// count. A whole-month(s) count (integer, from a full calendar span) reads
+// as "(one month)" / "(two months)"; a partial run reads as a plain day
+// count or "N month(s) M days" (e.g. "23 days", "1 month 20 days") instead
+// of a decimal months value like "0.77 months".
 export function buildPeriodLabel(fromIso: string, toIso: string, months: number): string {
   if (!fromIso || !toIso) return "";
-  return `${fmtDateDot(fromIso)} to ${fmtDateDot(toIso)} (${monthsLabel(months)})`;
+  const dateRange = `${fmtDateDot(fromIso)} to ${fmtDateDot(toIso)}`;
+
+  if (Number.isInteger(months)) {
+    return `${dateRange} (${monthsLabel(months)})`;
+  }
+
+  const days = daysBetweenInclusive(fromIso, toIso);
+  const wholeMonths = Math.floor(days / 30);
+  const remainderDays = days - wholeMonths * 30;
+  const dayPart = remainderDays > 0 ? `${remainderDays} day${remainderDays === 1 ? "" : "s"}` : "";
+  const monthPart = wholeMonths > 0 ? `${wholeMonths} month${wholeMonths === 1 ? "" : "s"}` : "";
+  const duration = [monthPart, dayPart].filter(Boolean).join(" ") || "0 days";
+
+  return `${dateRange} (${duration})`;
 }
 
 // Billing convention: 1 month = 30 days, inclusive of both the from and to date
@@ -124,7 +149,7 @@ export function monthsFromPeriod(fromIso: string, toIso: string): number {
   if (!fromIso || !toIso) return 1;
   const from = new Date(fromIso + "T00:00:00");
   const to = new Date(toIso + "T00:00:00");
-  const days = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
+  const days = daysBetweenInclusive(fromIso, toIso);
   if (days <= 0) return 1;
 
   const lastDayOfToMonth = new Date(to.getFullYear(), to.getMonth() + 1, 0).getDate();
