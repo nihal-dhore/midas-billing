@@ -112,6 +112,30 @@ export function buildPeriodLabel(fromIso: string, toIso: string, months: number)
   return `${fmtDateDot(fromIso)} to ${fmtDateDot(toIso)} (${monthsLabel(months)})`;
 }
 
+// Billing convention: 1 month = 30 days, inclusive of both the from and to date
+// (e.g. 01.08.2026 to 20.08.2026 = 20 days = 0.67 months), so a partial-month
+// display run is prorated instead of always billed as a full month.
+//
+// A period that runs from the 1st of a month through the last day of a month
+// (spanning whole calendar months, e.g. 01.08 to 31.08, or 01.08 to 30.09) is
+// billed as a clean integer month count instead of the 30-day approximation —
+// a 31-day calendar month shouldn't read as "1.03 months" on the invoice.
+export function monthsFromPeriod(fromIso: string, toIso: string): number {
+  if (!fromIso || !toIso) return 1;
+  const from = new Date(fromIso + "T00:00:00");
+  const to = new Date(toIso + "T00:00:00");
+  const days = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
+  if (days <= 0) return 1;
+
+  const lastDayOfToMonth = new Date(to.getFullYear(), to.getMonth() + 1, 0).getDate();
+  const isFullCalendarSpan = from.getDate() === 1 && to.getDate() === lastDayOfToMonth;
+  if (isFullCalendarSpan) {
+    return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
+  }
+
+  return round2(days / 30);
+}
+
 export interface TaxRow {
   label: string;
   amount: number;

@@ -1,5 +1,5 @@
 import { BillItem, DisplayTemplate } from "@/lib/types";
-import { buildPeriodLabel, round2 } from "@/lib/money";
+import { buildPeriodLabel, monthsFromPeriod, round2 } from "@/lib/money";
 import styles from "./ItemEditor.module.css";
 
 interface Props {
@@ -18,8 +18,13 @@ export default function ItemEditor({ item, index, templates, onChange, onRemove,
     onChange({ ...item, ...fields });
   }
 
+  // Recomputes months (30-day convention) and amount from the period bounds,
+  // so a partial-month display run gets prorated instead of billed as a full
+  // month. Used by the period-from/period-to date pickers.
   function patchAndRebuildPeriod(fields: Partial<BillItem>) {
     const next = { ...item, ...fields };
+    next.months = monthsFromPeriod(next.periodFrom, next.periodTo);
+    next.amount = round2(next.rate * next.months);
     next.periodLabel = buildPeriodLabel(next.periodFrom, next.periodTo, next.months);
     onChange(next);
   }
