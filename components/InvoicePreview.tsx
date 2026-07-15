@@ -6,11 +6,27 @@ interface Props {
   bill: Bill;
 }
 
+// Fixed (not flex/percentage-based) filler heights for the last item row,
+// tuned so the item table's blank space reaches near the page bottom for a
+// short bill without pushing the totals/footer/signature onto a second
+// page. Static heights are used instead of a flex-grow/height:100% fill
+// because Safari's print engine (used by the iPad "Download PDF" -> Print
+// -> Save as PDF flow) does not reliably size flex/percentage-height
+// content in paged media — it renders blank/collapsed boxes there even
+// though Chromium's print pipeline handles it fine.
+function fillerHeightMm(itemCount: number): number | null {
+  if (itemCount === 1) return 80;
+  if (itemCount === 2) return 55;
+  if (itemCount === 3) return 25;
+  return null;
+}
+
 export default function InvoicePreview({ bill }: Props) {
   const { net, taxRows, grandTotal } = calcBillTotals(bill);
   const rightRows: TaxRow[] = [{ label: "Net Amount Before Tax", amount: net }, ...taxRows];
 
   const dense = bill.items.length > 3 ? styles.dense : "";
+  const fillerMm = fillerHeightMm(bill.items.length);
 
   return (
     <div className={`${styles.sheet} ${dense} invoice-sheet`}>
@@ -45,89 +61,87 @@ export default function InvoicePreview({ bill }: Props) {
 
       {/* Item rows and totals rows live in one bordered table (matching the
           real bills) so a short item list leaves blank space INSIDE the
-          table border rather than a floating gap outside it. Only the last
-          item row gets an explicit height, so it alone stretches to absorb
-          the table's leftover height — its own border becomes the single
-          line separating items from totals, instead of a second seam. */}
-      <div className={styles.tableWrap}>
-        <table className={`${styles.table} ${styles.mainTable}`}>
-          <colgroup>
-            <col style={{ width: "6%" }} />
-            <col style={{ width: "52%" }} />
-            <col style={{ width: "11%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "17%" }} />
-          </colgroup>
-          <thead>
-            <tr className={styles.theadRow}>
-              <th>Sr. No.</th>
-              <th>Description</th>
-              <th>SAC Code</th>
-              <th>Rate</th>
-              <th>Taxable Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bill.items.map((item, idx) => {
-              const isLast = idx === bill.items.length - 1;
-              const fillCell = isLast ? styles.rowFiller : "";
-              return (
-                <tr key={item.id}>
-                  <td className={`${styles.srCell} ${fillCell}`}>{idx + 1})</td>
-                  <td className={`${styles.descCell} ${fillCell}`}>
-                    <p className={styles.bold}>Sale of other advertising space or time</p>
-                    <p className={styles.bold}>DISPLAY CHARGES</p>
-                    <p className={styles.bold}>DISPLAY : {item.display}</p>
-                    <p>
-                      <span className={styles.bold}>Location</span> : {item.location}
-                    </p>
-                    <p>
-                      <span className={styles.bold}>Size</span> : {item.size}
-                    </p>
-                    <p>
-                      <span className={styles.bold}>Display Period</span> : {item.periodLabel}
-                    </p>
-                  </td>
-                  <td className={`${styles.centerCell} ${fillCell}`}>{item.sacCode}</td>
-                  <td className={`${styles.centerCell} ${fillCell}`}>
-                    {fmtInr(item.rate)}
-                    <br />
-                    {item.rateUnit}
-                  </td>
-                  <td className={`${styles.rightCell} ${fillCell}`}>{fmtInr(item.amount)}</td>
-                </tr>
-              );
-            })}
-
-            {rightRows.map((row, i) => (
-              <tr key={row.label} className={styles.totalsRow}>
-                {i === 0 && (
-                  <td className={styles.totalsLeftCell} colSpan={2} rowSpan={rightRows.length}>
-                    <p>GSTIN : {SELLER.gstin}</p>
-                    <p>PAN No : {SELLER.pan}</p>
-                    <p>UDYAM R.No : {SELLER.udyam}</p>
-                  </td>
-                )}
+          table border rather than a floating gap outside it. Only the
+          description cell of the last item gets an explicit fixed height
+          (see fillerHeightMm) — the table row layout stretches the whole
+          row to match, so its border becomes the single line separating
+          items from totals, instead of a second seam. */}
+      <table className={styles.table}>
+        <colgroup>
+          <col style={{ width: "6%" }} />
+          <col style={{ width: "52%" }} />
+          <col style={{ width: "11%" }} />
+          <col style={{ width: "14%" }} />
+          <col style={{ width: "17%" }} />
+        </colgroup>
+        <thead>
+          <tr className={styles.theadRow}>
+            <th>Sr. No.</th>
+            <th>Description</th>
+            <th>SAC Code</th>
+            <th>Rate</th>
+            <th>Taxable Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bill.items.map((item, idx) => {
+            const isLast = idx === bill.items.length - 1;
+            return (
+              <tr key={item.id}>
+                <td className={styles.srCell}>{idx + 1})</td>
                 <td
-                  className={`${styles.totalsLabelCell} ${i > 0 ? styles.taxBg : ""}`}
-                  colSpan={2}
+                  className={styles.descCell}
+                  style={isLast && fillerMm ? { height: `${fillerMm}mm` } : undefined}
                 >
-                  {row.label}
+                  <p className={styles.bold}>Sale of other advertising space or time</p>
+                  <p className={styles.bold}>DISPLAY CHARGES</p>
+                  <p className={styles.bold}>DISPLAY : {item.display}</p>
+                  <p>
+                    <span className={styles.bold}>Location</span> : {item.location}
+                  </p>
+                  <p>
+                    <span className={styles.bold}>Size</span> : {item.size}
+                  </p>
+                  <p>
+                    <span className={styles.bold}>Display Period</span> : {item.periodLabel}
+                  </p>
                 </td>
-                <td className={`${styles.totalsValueCell} ${i > 0 ? styles.taxBg : ""}`}>
-                  {fmtInr(row.amount)}
+                <td className={styles.centerCell}>{item.sacCode}</td>
+                <td className={styles.centerCell}>
+                  {fmtInr(item.rate)}
+                  <br />
+                  {item.rateUnit}
                 </td>
+                <td className={styles.rightCell}>{fmtInr(item.amount)}</td>
               </tr>
-            ))}
+            );
+          })}
 
-            <tr className={styles.grandRow}>
-              <td colSpan={2}>Rs : {numberToWordsIndian(grandTotal)}.</td>
-              <td colSpan={2}>GRAND TOTAL :</td>
-              <td>{fmtInr(grandTotal)}</td>
+          {rightRows.map((row, i) => (
+            <tr key={row.label} className={styles.totalsRow}>
+              {i === 0 && (
+                <td className={styles.totalsLeftCell} colSpan={2} rowSpan={rightRows.length}>
+                  <p>GSTIN : {SELLER.gstin}</p>
+                  <p>PAN No : {SELLER.pan}</p>
+                  <p>UDYAM R.No : {SELLER.udyam}</p>
+                </td>
+              )}
+              <td className={`${styles.totalsLabelCell} ${i > 0 ? styles.taxBg : ""}`} colSpan={2}>
+                {row.label}
+              </td>
+              <td className={`${styles.totalsValueCell} ${i > 0 ? styles.taxBg : ""}`}>
+                {fmtInr(row.amount)}
+              </td>
             </tr>
-          </tbody>
-        </table>
-      </div>
+          ))}
+
+          <tr className={styles.grandRow}>
+            <td colSpan={2}>Rs : {numberToWordsIndian(grandTotal)}.</td>
+            <td colSpan={2}>GRAND TOTAL :</td>
+            <td>{fmtInr(grandTotal)}</td>
+          </tr>
+        </tbody>
+      </table>
 
       <div className={styles.footerRow}>
         <div className={styles.footerLeft}>

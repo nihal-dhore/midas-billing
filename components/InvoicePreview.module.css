@@ -25,8 +25,6 @@
   font-size: 12px;
   line-height: 1.35;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--sheet-ring, transparent);
-  display: flex;
-  flex-direction: column;
 }
 
 /* Applied when a bill has more than 3 items: knocks every font size down a
@@ -65,27 +63,6 @@
 .dense .footerLeft,
 .dense .footerRight {
   font-size: 9px;
-}
-
-/* Wraps the item+totals table so it can grow to fill the leftover page
-   height (see .fillerCell) instead of leaving a floating gap after the
-   table closes — the blank space for a stamp stays inside the border. */
-.tableWrap {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.mainTable {
-  flex: 1 1 auto;
-  height: 100%;
-}
-
-/* Only cells with an explicit height, so the last item row alone absorbs
-   the table's leftover height once .mainTable is stretched to fill
-   .tableWrap — its own border becomes the line above the totals section. */
-.rowFiller {
-  height: 100%;
 }
 
 .header {
