@@ -22,23 +22,70 @@
   padding: 10mm 11mm;
   box-sizing: border-box;
   font-family: "Canva Sans", Arial, Helvetica, sans-serif;
-  font-size: 10.5px;
+  font-size: 12px;
   line-height: 1.35;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--sheet-ring, transparent);
   display: flex;
   flex-direction: column;
 }
 
-/* Totals + footer + signature, grouped and pushed to the bottom of the page
-   so the amount and signature stay together for a quick sign-off, with a
-   gap above for a physical stamp when the item table is short. Collapses to
-   the normal in-flow gap once items fill/overflow the page. */
-.bottomBlock {
-  margin-top: auto;
+/* Applied when a bill has more than 3 items: knocks every font size down a
+   notch so a longer item list still fits one page naturally instead of
+   spilling a mostly-blank page 2 (the stamp/signature gap stays fixed). */
+.dense {
+  font-size: 10.5px;
+}
+
+.dense .companyName {
+  font-size: 26px;
+}
+
+.dense .tagline {
+  font-size: 11px;
+}
+
+.dense .addressLine {
+  font-size: 9.5px;
+}
+
+.dense .titleBar {
+  font-size: 14px;
+}
+
+.dense .buyerBlock,
+.dense .metaBlock,
+.dense .theadRow th {
+  font-size: 10px;
+}
+
+.dense .grandRow td {
+  font-size: 11px;
+}
+
+.dense .footerLeft,
+.dense .footerRight {
+  font-size: 9px;
+}
+
+/* Wraps the item+totals table so it can grow to fill the leftover page
+   height (see .fillerCell) instead of leaving a floating gap after the
+   table closes — the blank space for a stamp stays inside the border. */
+.tableWrap {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  break-inside: avoid;
-  page-break-inside: avoid;
+}
+
+.mainTable {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* Only cells with an explicit height, so the last item row alone absorbs
+   the table's leftover height once .mainTable is stretched to fill
+   .tableWrap — its own border becomes the line above the totals section. */
+.rowFiller {
+  height: 100%;
 }
 
 .header {
@@ -46,7 +93,7 @@
 }
 
 .companyName {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--brand-blue);
   margin: 0 0 2px;
@@ -54,13 +101,13 @@
 }
 
 .tagline {
-  font-size: 12px;
+  font-size: 13px;
   text-decoration: underline;
   margin: 0 0 6px;
 }
 
 .addressLine {
-  font-size: 10px;
+  font-size: 11px;
   margin: 0;
 }
 
@@ -72,7 +119,7 @@
 
 .titleBar {
   text-align: center;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--brand-blue);
   letter-spacing: 1px;
@@ -88,7 +135,7 @@
 }
 
 .buyerBlock {
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 .buyerBlock p {
@@ -110,7 +157,7 @@
 }
 
 .metaBlock {
-  font-size: 10.5px;
+  font-size: 12px;
   text-align: right;
   white-space: nowrap;
   padding-top: 2px;
@@ -146,7 +193,7 @@
 .theadRow th {
   text-align: center;
   font-weight: 700;
-  font-size: 10.5px;
+  font-size: 12px;
   background: #fff;
 }
 
@@ -165,10 +212,6 @@
 
 .bold {
   font-weight: 700;
-}
-
-.itemsFiller {
-  height: 45mm;
 }
 
 .centerCell {
@@ -213,7 +256,7 @@
   background: var(--brand-blue);
   color: #fff;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12.5px;
 }
 
 .footerRow {
@@ -227,7 +270,7 @@
 
 .footerLeft {
   flex: 1 1 62%;
-  font-size: 9.3px;
+  font-size: 10.5px;
 }
 
 .footerLeft p {
@@ -251,7 +294,7 @@
 
 .footerRight {
   flex: 1 1 34%;
-  font-size: 9.5px;
+  font-size: 10.5px;
 }
 
 .bankTitle {
@@ -273,7 +316,7 @@
 
 .signature {
   text-align: right;
-  margin-top: 22px;
+  margin-top: 90px;
   font-weight: 800;
   color: var(--brand-blue);
   break-inside: avoid;

@@ -10,8 +10,10 @@ export default function InvoicePreview({ bill }: Props) {
   const { net, taxRows, grandTotal } = calcBillTotals(bill);
   const rightRows: TaxRow[] = [{ label: "Net Amount Before Tax", amount: net }, ...taxRows];
 
+  const dense = bill.items.length > 3 ? styles.dense : "";
+
   return (
-    <div className={`${styles.sheet} invoice-sheet`}>
+    <div className={`${styles.sheet} ${dense} invoice-sheet`}>
       <div className={styles.header}>
         <p className={styles.companyName}>{SELLER.name}</p>
         <p className={styles.tagline}>{SELLER.tagline}</p>
@@ -41,63 +43,14 @@ export default function InvoicePreview({ bill }: Props) {
         </div>
       </div>
 
-      <table className={styles.table}>
-        <colgroup>
-          <col style={{ width: "6%" }} />
-          <col style={{ width: "52%" }} />
-          <col style={{ width: "11%" }} />
-          <col style={{ width: "14%" }} />
-          <col style={{ width: "17%" }} />
-        </colgroup>
-        <thead>
-          <tr className={styles.theadRow}>
-            <th>Sr. No.</th>
-            <th>Description</th>
-            <th>SAC Code</th>
-            <th>Rate</th>
-            <th>Taxable Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bill.items.map((item, idx) => (
-            <tr key={item.id}>
-              <td className={styles.srCell}>{idx + 1})</td>
-              <td
-                className={`${styles.descCell} ${
-                  idx === bill.items.length - 1 && bill.items.length <= 3 ? styles.itemsFiller : ""
-                }`}
-              >
-                <p className={styles.bold}>Sale of other advertising space or time</p>
-                <p className={styles.bold}>DISPLAY CHARGES</p>
-                <p className={styles.bold}>DISPLAY : {item.display}</p>
-                <p>
-                  <span className={styles.bold}>Location</span> : {item.location}
-                </p>
-                <p>
-                  <span className={styles.bold}>Size</span> : {item.size}
-                </p>
-                <p>
-                  <span className={styles.bold}>Display Period</span> : {item.periodLabel}
-                </p>
-              </td>
-              <td className={styles.centerCell}>{item.sacCode}</td>
-              <td className={styles.centerCell}>
-                {fmtInr(item.rate)}
-                <br />
-                {item.rateUnit}
-              </td>
-              <td className={styles.rightCell}>{fmtInr(item.amount)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Totals + footer + signature are grouped and pinned to the bottom of
-          the page (see .bottomBlock), matching the real bills: the total
-          amount and signature stay together in view for a quick sign-off,
-          with room above for a physical stamp when there are few items. */}
-      <div className={styles.bottomBlock}>
-        <table className={styles.table}>
+      {/* Item rows and totals rows live in one bordered table (matching the
+          real bills) so a short item list leaves blank space INSIDE the
+          table border rather than a floating gap outside it. Only the last
+          item row gets an explicit height, so it alone stretches to absorb
+          the table's leftover height — its own border becomes the single
+          line separating items from totals, instead of a second seam. */}
+      <div className={styles.tableWrap}>
+        <table className={`${styles.table} ${styles.mainTable}`}>
           <colgroup>
             <col style={{ width: "6%" }} />
             <col style={{ width: "52%" }} />
@@ -105,7 +58,47 @@ export default function InvoicePreview({ bill }: Props) {
             <col style={{ width: "14%" }} />
             <col style={{ width: "17%" }} />
           </colgroup>
+          <thead>
+            <tr className={styles.theadRow}>
+              <th>Sr. No.</th>
+              <th>Description</th>
+              <th>SAC Code</th>
+              <th>Rate</th>
+              <th>Taxable Amount</th>
+            </tr>
+          </thead>
           <tbody>
+            {bill.items.map((item, idx) => {
+              const isLast = idx === bill.items.length - 1;
+              const fillCell = isLast ? styles.rowFiller : "";
+              return (
+                <tr key={item.id}>
+                  <td className={`${styles.srCell} ${fillCell}`}>{idx + 1})</td>
+                  <td className={`${styles.descCell} ${fillCell}`}>
+                    <p className={styles.bold}>Sale of other advertising space or time</p>
+                    <p className={styles.bold}>DISPLAY CHARGES</p>
+                    <p className={styles.bold}>DISPLAY : {item.display}</p>
+                    <p>
+                      <span className={styles.bold}>Location</span> : {item.location}
+                    </p>
+                    <p>
+                      <span className={styles.bold}>Size</span> : {item.size}
+                    </p>
+                    <p>
+                      <span className={styles.bold}>Display Period</span> : {item.periodLabel}
+                    </p>
+                  </td>
+                  <td className={`${styles.centerCell} ${fillCell}`}>{item.sacCode}</td>
+                  <td className={`${styles.centerCell} ${fillCell}`}>
+                    {fmtInr(item.rate)}
+                    <br />
+                    {item.rateUnit}
+                  </td>
+                  <td className={`${styles.rightCell} ${fillCell}`}>{fmtInr(item.amount)}</td>
+                </tr>
+              );
+            })}
+
             {rightRows.map((row, i) => (
               <tr key={row.label} className={styles.totalsRow}>
                 {i === 0 && (
@@ -134,43 +127,43 @@ export default function InvoicePreview({ bill }: Props) {
             </tr>
           </tbody>
         </table>
+      </div>
 
-        <div className={styles.footerRow}>
-          <div className={styles.footerLeft}>
+      <div className={styles.footerRow}>
+        <div className={styles.footerLeft}>
+          <p>
+            <span className={styles.bold}>Note:</span> Please indicate our Bill No.on the TDS
+            certificate if Income Tax is deducted from our payment. Please deduct TDS on the
+            Basic Amount and Not on GST as per CBDT Circular 01/2014 dtd. 13/01/2014
+          </p>
+          <hr className={styles.footerRule} />
+          <p className={styles.bold}>E &amp; O.E.</p>
+          <ul className={styles.bulletList}>
+            <li>
+              cheque should be drawn in favour of <span className={styles.bold}>&quot;MIDAS PUBLICITY&quot;</span>
+            </li>
+            <li>Any complaint about this bill must be received within 3 days from the receipt of this bill.</li>
+            <li>Amount shall be deemed to be overdue at the end of 30 days from the date of this bill.</li>
+            <li>Interest at 12% will be charged on over due bills.</li>
+          </ul>
+        </div>
+        <div className={styles.footerRight}>
+          <p className={styles.bankTitle}>BANK DETAILS</p>
+          <div className={styles.bankBox}>
+            <p>A/c Name : {SELLER.bank.acName}</p>
+            <p>Bank : {SELLER.bank.bank}</p>
+            <p>Branch: {SELLER.bank.branch}</p>
             <p>
-              <span className={styles.bold}>Note:</span> Please indicate our Bill No.on the TDS
-              certificate if Income Tax is deducted from our payment. Please deduct TDS on the
-              Basic Amount and Not on GST as per CBDT Circular 01/2014 dtd. 13/01/2014
+              A/c No : <span className={styles.bold}>{SELLER.bank.acNo}</span>
             </p>
-            <hr className={styles.footerRule} />
-            <p className={styles.bold}>E &amp; O.E.</p>
-            <ul className={styles.bulletList}>
-              <li>
-                cheque should be drawn in favour of <span className={styles.bold}>&quot;MIDAS PUBLICITY&quot;</span>
-              </li>
-              <li>Any complaint about this bill must be received within 3 days from the receipt of this bill.</li>
-              <li>Amount shall be deemed to be overdue at the end of 30 days from the date of this bill.</li>
-              <li>Interest at 12% will be charged on over due bills.</li>
-            </ul>
-          </div>
-          <div className={styles.footerRight}>
-            <p className={styles.bankTitle}>BANK DETAILS</p>
-            <div className={styles.bankBox}>
-              <p>A/c Name : {SELLER.bank.acName}</p>
-              <p>Bank : {SELLER.bank.bank}</p>
-              <p>Branch: {SELLER.bank.branch}</p>
-              <p>
-                A/c No : <span className={styles.bold}>{SELLER.bank.acNo}</span>
-              </p>
-              <p>
-                IFS Code : <span className={styles.bold}>{SELLER.bank.ifsc}</span>
-              </p>
-            </div>
+            <p>
+              IFS Code : <span className={styles.bold}>{SELLER.bank.ifsc}</span>
+            </p>
           </div>
         </div>
-
-        <p className={styles.signature}>For {SELLER.name}</p>
       </div>
+
+      <p className={styles.signature}>For {SELLER.name}</p>
     </div>
   );
 }
