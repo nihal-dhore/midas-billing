@@ -13,11 +13,15 @@ interface Props {
 // because Safari's print engine (used by the iPad "Download PDF" -> Print
 // -> Save as PDF flow) does not reliably size flex/percentage-height
 // content in paged media — it renders blank/collapsed boxes there even
-// though Chromium's print pipeline handles it fine.
+// though Chromium's print pipeline handles it fine. Kept conservative
+// (rather than maximizing blank space) because AirPrint / "Save as PDF"
+// on iPad can default to Letter (279mm) instead of A4 (297mm) regardless
+// of our @page CSS, and buyer address/description line-wrapping varies
+// with real content — the signature's own margin-top provides the stamp
+// gap, so this only needs to keep the table looking non-cramped.
 function fillerHeightMm(itemCount: number): number | null {
-  if (itemCount === 1) return 80;
-  if (itemCount === 2) return 55;
-  if (itemCount === 3) return 25;
+  if (itemCount === 1) return 40;
+  if (itemCount === 2) return 20;
   return null;
 }
 
