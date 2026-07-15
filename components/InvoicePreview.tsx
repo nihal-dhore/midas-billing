@@ -89,71 +89,88 @@ export default function InvoicePreview({ bill }: Props) {
               <td className={styles.rightCell}>{fmtInr(item.amount)}</td>
             </tr>
           ))}
-
-          {rightRows.map((row, i) => (
-            <tr key={row.label} className={styles.totalsRow}>
-              {i === 0 && (
-                <td className={styles.totalsLeftCell} colSpan={2} rowSpan={rightRows.length}>
-                  <p>GSTIN : {SELLER.gstin}</p>
-                  <p>PAN No : {SELLER.pan}</p>
-                  <p>UDYAM R.No : {SELLER.udyam}</p>
-                </td>
-              )}
-              <td
-                className={`${styles.totalsLabelCell} ${i > 0 ? styles.taxBg : ""}`}
-                colSpan={2}
-              >
-                {row.label}
-              </td>
-              <td className={`${styles.totalsValueCell} ${i > 0 ? styles.taxBg : ""}`}>
-                {fmtInr(row.amount)}
-              </td>
-            </tr>
-          ))}
-
-          <tr className={styles.grandRow}>
-            <td colSpan={2}>Rs : {numberToWordsIndian(grandTotal)}.</td>
-            <td colSpan={2}>GRAND TOTAL :</td>
-            <td>{fmtInr(grandTotal)}</td>
-          </tr>
         </tbody>
       </table>
 
-      <div className={styles.footerRow}>
-        <div className={styles.footerLeft}>
-          <p>
-            <span className={styles.bold}>Note:</span> Please indicate our Bill No.on the TDS
-            certificate if Income Tax is deducted from our payment. Please deduct TDS on the
-            Basic Amount and Not on GST as per CBDT Circular 01/2014 dtd. 13/01/2014
-          </p>
-          <hr className={styles.footerRule} />
-          <p className={styles.bold}>E &amp; O.E.</p>
-          <ul className={styles.bulletList}>
-            <li>
-              cheque should be drawn in favour of <span className={styles.bold}>&quot;MIDAS PUBLICITY&quot;</span>
-            </li>
-            <li>Any complaint about this bill must be received within 3 days from the receipt of this bill.</li>
-            <li>Amount shall be deemed to be overdue at the end of 30 days from the date of this bill.</li>
-            <li>Interest at 12% will be charged on over due bills.</li>
-          </ul>
-        </div>
-        <div className={styles.footerRight}>
-          <p className={styles.bankTitle}>BANK DETAILS</p>
-          <div className={styles.bankBox}>
-            <p>A/c Name : {SELLER.bank.acName}</p>
-            <p>Bank : {SELLER.bank.bank}</p>
-            <p>Branch: {SELLER.bank.branch}</p>
+      {/* Totals + footer + signature are grouped and pinned to the bottom of
+          the page (see .bottomBlock), matching the real bills: the total
+          amount and signature stay together in view for a quick sign-off,
+          with room above for a physical stamp when there are few items. */}
+      <div className={styles.bottomBlock}>
+        <table className={styles.table}>
+          <colgroup>
+            <col style={{ width: "6%" }} />
+            <col style={{ width: "52%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "17%" }} />
+          </colgroup>
+          <tbody>
+            {rightRows.map((row, i) => (
+              <tr key={row.label} className={styles.totalsRow}>
+                {i === 0 && (
+                  <td className={styles.totalsLeftCell} colSpan={2} rowSpan={rightRows.length}>
+                    <p>GSTIN : {SELLER.gstin}</p>
+                    <p>PAN No : {SELLER.pan}</p>
+                    <p>UDYAM R.No : {SELLER.udyam}</p>
+                  </td>
+                )}
+                <td
+                  className={`${styles.totalsLabelCell} ${i > 0 ? styles.taxBg : ""}`}
+                  colSpan={2}
+                >
+                  {row.label}
+                </td>
+                <td className={`${styles.totalsValueCell} ${i > 0 ? styles.taxBg : ""}`}>
+                  {fmtInr(row.amount)}
+                </td>
+              </tr>
+            ))}
+
+            <tr className={styles.grandRow}>
+              <td colSpan={2}>Rs : {numberToWordsIndian(grandTotal)}.</td>
+              <td colSpan={2}>GRAND TOTAL :</td>
+              <td>{fmtInr(grandTotal)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className={styles.footerRow}>
+          <div className={styles.footerLeft}>
             <p>
-              A/c No : <span className={styles.bold}>{SELLER.bank.acNo}</span>
+              <span className={styles.bold}>Note:</span> Please indicate our Bill No.on the TDS
+              certificate if Income Tax is deducted from our payment. Please deduct TDS on the
+              Basic Amount and Not on GST as per CBDT Circular 01/2014 dtd. 13/01/2014
             </p>
-            <p>
-              IFS Code : <span className={styles.bold}>{SELLER.bank.ifsc}</span>
-            </p>
+            <hr className={styles.footerRule} />
+            <p className={styles.bold}>E &amp; O.E.</p>
+            <ul className={styles.bulletList}>
+              <li>
+                cheque should be drawn in favour of <span className={styles.bold}>&quot;MIDAS PUBLICITY&quot;</span>
+              </li>
+              <li>Any complaint about this bill must be received within 3 days from the receipt of this bill.</li>
+              <li>Amount shall be deemed to be overdue at the end of 30 days from the date of this bill.</li>
+              <li>Interest at 12% will be charged on over due bills.</li>
+            </ul>
+          </div>
+          <div className={styles.footerRight}>
+            <p className={styles.bankTitle}>BANK DETAILS</p>
+            <div className={styles.bankBox}>
+              <p>A/c Name : {SELLER.bank.acName}</p>
+              <p>Bank : {SELLER.bank.bank}</p>
+              <p>Branch: {SELLER.bank.branch}</p>
+              <p>
+                A/c No : <span className={styles.bold}>{SELLER.bank.acNo}</span>
+              </p>
+              <p>
+                IFS Code : <span className={styles.bold}>{SELLER.bank.ifsc}</span>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <p className={styles.signature}>For {SELLER.name}</p>
+        <p className={styles.signature}>For {SELLER.name}</p>
+      </div>
     </div>
   );
 }

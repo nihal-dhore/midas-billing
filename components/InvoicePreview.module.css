@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Canva Sans";
+  src: url("/fonts/CanvaSans-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Canva Sans";
+  src: url("/fonts/CanvaSans-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 .sheet {
   width: 210mm;
   min-height: 297mm;
@@ -5,10 +21,24 @@
   color: #000000;
   padding: 10mm 11mm;
   box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Canva Sans", Arial, Helvetica, sans-serif;
   font-size: 10.5px;
   line-height: 1.35;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--sheet-ring, transparent);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Totals + footer + signature, grouped and pushed to the bottom of the page
+   so the amount and signature stay together for a quick sign-off, with a
+   gap above for a physical stamp when the item table is short. Collapses to
+   the normal in-flow gap once items fill/overflow the page. */
+.bottomBlock {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .header {
