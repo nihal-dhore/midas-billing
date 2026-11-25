@@ -1,5 +1,5 @@
 import { BillItem, DisplayTemplate } from "@/lib/types";
-import { buildPeriodLabel, monthsFromPeriod, round2 } from "@/lib/money";
+import { buildPeriodLabel, monthsFromPeriod, roundRupee } from "@/lib/money";
 import styles from "./ItemEditor.module.css";
 
 interface Props {
@@ -24,7 +24,7 @@ export default function ItemEditor({ item, index, templates, onChange, onRemove,
   function patchAndRebuildPeriod(fields: Partial<BillItem>) {
     const next = { ...item, ...fields };
     next.months = monthsFromPeriod(next.periodFrom, next.periodTo);
-    next.amount = round2(next.rate * next.months);
+    next.amount = roundRupee(next.rate * next.months);
     next.periodLabel = buildPeriodLabel(next.periodFrom, next.periodTo, next.months);
     onChange(next);
   }
@@ -39,7 +39,7 @@ export default function ItemEditor({ item, index, templates, onChange, onRemove,
       sacCode: tpl.sacCode,
       rate: tpl.rate,
       rateUnit: tpl.rateUnit,
-      amount: round2(tpl.rate * item.months),
+      amount: roundRupee(tpl.rate * item.months),
     });
   }
 
@@ -165,7 +165,7 @@ export default function ItemEditor({ item, index, templates, onChange, onRemove,
             value={item.rate}
             onChange={(e) => {
               const rate = parseFloat(e.target.value) || 0;
-              patch({ rate, amount: round2(rate * item.months) });
+              patch({ rate, amount: roundRupee(rate * item.months) });
             }}
           />
         </div>

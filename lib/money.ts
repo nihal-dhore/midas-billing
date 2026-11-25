@@ -1,8 +1,8 @@
 import { Bill } from "./types";
 
-// Indian digit grouping with "=paise" suffix, e.g. 135000 -> "1,35,000=00"
+// Indian digit grouping with ".paise" suffix, e.g. 135000 -> "1,35,000.00"
 export function fmtInr(n: number): string {
-  if (!isFinite(n)) return "0=00";
+  if (!isFinite(n)) return "0.00";
   const negative = n < 0;
   const abs = Math.abs(n);
   const rupees = Math.floor(abs + 1e-9);
@@ -19,7 +19,7 @@ export function fmtInr(n: number): string {
     if (rest) parts.unshift(rest);
     s = parts.join(",") + "," + last3;
   }
-  return (negative ? "-" : "") + s + "=" + paise.toString().padStart(2, "0");
+  return (negative ? "-" : "") + s + "." + paise.toString().padStart(2, "0");
 }
 
 const ONES = [
@@ -94,6 +94,13 @@ export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+// Bills carry whole rupees only: every amount is rounded to the nearest
+// rupee (50 paise and above rounds up), the usual GST invoice convention.
+// round2 first so float noise like 140000.0000001 or 0.4999999 doesn't tip it.
+export function roundRupee(n: number): number {
+  return Math.round(round2(n));
+}
+
 // Months count -> word/numeric label used inside the Display Period line
 export function monthsLabel(months: number): string {
   const WORDS: Record<number, string> = {
@@ -138,8 +145,10 @@ export function buildPeriodLabel(fromIso: string, toIso: string, months: number)
 }
 
 // Billing convention: 1 month = 30 days, inclusive of both the from and to date
-// (e.g. 01.08.2026 to 20.08.2026 = 20 days = 0.67 months), so a partial-month
-// display run is prorated instead of always billed as a full month.
+// (e.g. 01.08.2026 to 20.08.2026 = 20 days = 20/30 months), so a partial-month
+// display run is prorated instead of always billed as a full month. The
+// fraction is returned unrounded: rounding it to 0.67 before multiplying by
+// the rate overcharged (2,10,000 x 0.67 = 1,40,700 instead of 1,40,000).
 //
 // A period that runs from the 1st of a month through the last day of a month
 // (spanning whole calendar months, e.g. 01.08 to 31.08, or 01.08 to 30.09) is
@@ -158,7 +167,7 @@ export function monthsFromPeriod(fromIso: string, toIso: string): number {
     return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth()) + 1;
   }
 
-  return round2(days / 30);
+  return days / 30;
 }
 
 export interface TaxRow {
@@ -175,18 +184,18 @@ export interface BillTotals {
 
 // Shared by the invoice preview and the form's running-total strip
 export function calcBillTotals(bill: Bill): BillTotals {
-  const net = round2(bill.items.reduce((sum, item) => sum + (item.amount || 0), 0));
+  const net = roundRupee(bill.items.reduce((sum, item) => sum + (item.amount || 0), 0));
 
   const taxRows: TaxRow[] = [];
   if (bill.taxMode === "igst") {
-    taxRows.push({ label: "IGST @18%", amount: round2(net * 0.18) });
+    taxRows.push({ label: "IGST @18%", amount: roundRupee(net * 0.18) });
   } else {
-    const half = round2(net * 0.09);
+    const half = roundRupee(net * 0.09);
     taxRows.push({ label: "CGST @9%", amount: half });
     taxRows.push({ label: "SGST @9%", amount: half });
   }
-  const taxTotal = round2(taxRows.reduce((sum, r) => sum + r.amount, 0));
-  const grandTotal = round2(net + taxTotal);
+  const taxTotal = taxRows.reduce((sum, r) => sum + r.amount, 0);
+  const grandTotal = net + taxTotal;
 
   return { net, taxRows, taxTotal, grandTotal };
 }
