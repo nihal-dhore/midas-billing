@@ -1,5 +1,5 @@
 import { Bill, SELLER } from "@/lib/types";
-import { calcBillTotals, fmtDateSlash, fmtInr, numberToWordsIndian, TaxRow } from "@/lib/money";
+import { calcBillTotals, fmtDateSlash, fmtInr, numberToWordsIndian, roundRupee, TaxRow } from "@/lib/money";
 import styles from "./InvoicePreview.module.css";
 
 interface Props {
@@ -119,7 +119,7 @@ export default function InvoicePreview({ bill }: Props) {
                   <br />
                   {item.rateUnit}
                 </td>
-                <td className={styles.rightCell}>{fmtInr(item.amount)}</td>
+                <td className={styles.rightCell}>{fmtInr(roundRupee(item.amount || 0))}</td>
               </tr>
             );
           })}

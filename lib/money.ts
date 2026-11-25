@@ -184,7 +184,8 @@ export interface BillTotals {
 
 // Shared by the invoice preview and the form's running-total strip
 export function calcBillTotals(bill: Bill): BillTotals {
-  const net = roundRupee(bill.items.reduce((sum, item) => sum + (item.amount || 0), 0));
+  // Round each line first so the printed item amounts always add up to the net
+  const net = bill.items.reduce((sum, item) => sum + roundRupee(item.amount || 0), 0);
 
   const taxRows: TaxRow[] = [];
   if (bill.taxMode === "igst") {
