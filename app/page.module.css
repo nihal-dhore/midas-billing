@@ -46,7 +46,7 @@
   margin: 0 auto;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .layout {
     flex-direction: column;
   }
@@ -60,10 +60,91 @@
   gap: 22px;
 }
 
-@media (max-width: 1100px) {
+/* narrower sidebar on iPad portrait / small laptops */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .formPanel {
+    flex-basis: 380px;
+  }
+}
+
+@media (max-width: 900px) {
   .formPanel {
     flex-basis: auto;
     width: 100%;
+  }
+}
+
+/* Hide/Show editor (side-by-side layout only) */
+.editorToggle {
+  gap: 6px;
+}
+
+.editorCollapsed .formPanel {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .editorToggle {
+    display: none;
+  }
+
+  /* the collapse setting only applies side by side; phones use the tabs */
+  .editorCollapsed .formPanel {
+    display: flex;
+  }
+}
+
+/* Phone layout: a sticky Edit | Preview switch, one screen at a time */
+.mobileTabs {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobileTabs {
+    display: flex;
+    position: sticky;
+    top: 16px;
+    z-index: 5;
+    gap: 4px;
+    margin: 0 28px 16px;
+    padding: 4px;
+    border-radius: var(--radius);
+    background: var(--field-bg);
+    box-shadow: 0 0 0 1px var(--line), 0 6px 16px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(8px);
+  }
+
+  .mobileTabs button {
+    flex: 1 1 0;
+    padding: 9px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .mobileTabs .mobileTabActive {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+
+  .mobileShowEdit .previewPanel {
+    display: none;
+  }
+
+  .mobileShowPreview .formPanel {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobileTabs {
+    margin: 0 16px 12px;
   }
 }
 
@@ -176,7 +257,78 @@
   transform-origin: top center;
 }
 
+/* Holds the scaled sheets at their scaled height, so the preview doesn't
+   scroll into empty space left by the transform (grows with photo pages) */
+.sheetSizer {
+  flex: none;
+}
+
+/* Side-by-side layout (laptop, iPad landscape): the page itself stays fixed
+   and the form and the preview each scroll on their own. Narrower screens
+   stack the two and keep normal page scrolling. */
+@media (min-width: 901px) {
+  .page {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .topbar {
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+    padding-bottom: 0;
+  }
+
+  .formPanel {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 6px 28px 0;
+  }
+
+  /* the form scrolls as a whole, so no second scrollbar inside it */
+  .itemsStack {
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .previewPanel {
+    position: static;
+    min-height: 0;
+  }
+
+  .previewScroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 28px;
+  }
+}
+
 @media print {
+  /* photo pages don't fill the whole page, so the grey screen canvas would
+     show below them */
+  .page {
+    background: #fff !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
   .layout {
     padding: 0;
     max-width: none;
@@ -184,16 +336,27 @@
     gap: 0;
   }
 
+  /* always print the preview, even if the phone Edit screen was showing */
   .previewPanel {
+    display: flex !important;
     position: static;
     flex: none;
     width: auto;
+    min-height: 0;
     gap: 0;
   }
 
+  /* display: block so the photo pages' forced page breaks aren't inside a
+     flex container, where print engines (Safari especially) can ignore them */
   .previewScroll {
+    display: block !important;
     aspect-ratio: auto !important;
     height: auto !important;
     overflow: visible !important;
+  }
+
+  .sheetSizer {
+    width: auto !important;
+    height: auto !important;
   }
 }

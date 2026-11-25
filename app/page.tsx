@@ -5,8 +5,11 @@ import styles from "./page.module.css";
 import InvoicePreview from "@/components/InvoicePreview";
 import ItemEditor from "@/components/ItemEditor";
 import ClientManager from "@/components/ClientManager";
+import PhotoEditor from "@/components/PhotoEditor";
+import PhotoPages from "@/components/PhotoPages";
 import { Bill, Client, TaxMode, emptyBill, newBillItem } from "@/lib/types";
 import { calcBillTotals, fmtInr, fyPrefix } from "@/lib/money";
+import { SitePhoto, loadPhotos, savePhotos } from "@/lib/photos";
 import {
   loadDraft,
   saveDraft,
@@ -14,6 +17,8 @@ import {
   saveLastSerial,
   loadTheme,
   saveTheme,
+  loadEditorOpen,
+  saveEditorOpen,
   Theme,
 } from "@/lib/store";
 
@@ -40,8 +45,17 @@ export default function Home() {
   const [bill, setBill] = useState<Bill>(emptyBill());
   const [scale, setScale] = useState(1);
   const [theme, setTheme] = useState<Theme>("light");
+  const [photos, setPhotos] = useState<SitePhoto[]>([]);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
+  const [photosSaveError, setPhotosSaveError] = useState("");
+  const [sheetHeight, setSheetHeight] = useState(0);
+  // side-by-side layout: edit sidebar shown or collapsed (remembered per device)
+  const [editorOpen, setEditorOpen] = useState(true);
+  // phone layout: which of the two screens is showing
+  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
 
   const previewScrollRef = useRef<HTMLDivElement>(null);
+  const sheetWrapRef = useRef<HTMLDivElement>(null);
 
   // initial load: clients from the server (shared across devices), the rest
   // stays in localStorage (draft-in-progress bill, invoice serial, theme)
@@ -66,14 +80,51 @@ export default function Home() {
       setBill(initial);
     }
 
+    setEditorOpen(loadEditorOpen());
+
     const storedTheme = loadTheme();
     const resolvedTheme =
       storedTheme ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setTheme(resolvedTheme);
     if (storedTheme) document.documentElement.setAttribute("data-theme", storedTheme);
 
+    // site photos live in IndexedDB on this device (too big for localStorage)
+    loadPhotos().then((stored) => {
+      setPhotos(stored);
+      setPhotosLoaded(true);
+    });
+
     setReady(true);
   }, []);
+
+  // persist photos on every change, after they've been loaded
+  useEffect(() => {
+    if (!photosLoaded) return;
+    savePhotos(photos).then((ok) =>
+      setPhotosSaveError(ok ? "" : "Couldn't save photos on this device. They'll be lost on reload.")
+    );
+  }, [photos, photosLoaded]);
+
+  // track the unscaled height of the sheets (invoice + photo pages)
+  useEffect(() => {
+    const el = sheetWrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setSheetHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ready]);
+
+  function toggleEditor() {
+    const next = !editorOpen;
+    setEditorOpen(next);
+    saveEditorOpen(next);
+  }
+
+  // phone Edit | Preview switch: jump back to the top of the new screen
+  function showMobileView(view: "edit" | "preview") {
+    setMobileView(view);
+    window.scrollTo({ top: 0 });
+  }
 
   function toggleTheme() {
     const next: Theme = theme === "dark" ? "light" : "dark";
@@ -94,6 +145,7 @@ export default function Home() {
       const container = previewScrollRef.current;
       if (!container) return;
       const availableWidth = container.clientWidth;
+      if (!availableWidth) return; // panel hidden (phone Edit screen)
       setScale(Math.min(1, availableWidth / A4_WIDTH_PX));
     }
     recomputeScale();
@@ -210,6 +262,19 @@ export default function Home() {
           <div className={styles.topbarSubtitle}>Generate tax invoices, preview live, download as A4 PDF</div>
         </div>
         <div className={styles.topbarActions}>
+          <button
+            type="button"
+            className={`btn btnGhost ${styles.editorToggle}`}
+            onClick={toggleEditor}
+            aria-expanded={editorOpen}
+            aria-controls="edit-panel"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M9 4v16" />
+            </svg>
+            {editorOpen ? "Hide editor" : "Show editor"}
+          </button>
           <button type="button" className="btn btnGhost" onClick={toggleTheme}>
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
@@ -219,8 +284,35 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={styles.layout}>
-        <div className={`${styles.formPanel} app-chrome`}>
+      <div className={`${styles.mobileTabs} app-chrome`} role="tablist" aria-label="Screen">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileView === "edit"}
+          className={mobileView === "edit" ? styles.mobileTabActive : ""}
+          onClick={() => showMobileView("edit")}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobileView === "preview"}
+          className={mobileView === "preview" ? styles.mobileTabActive : ""}
+          onClick={() => showMobileView("preview")}
+        >
+          Preview
+        </button>
+      </div>
+
+      <div
+        className={[
+          styles.layout,
+          editorOpen ? "" : styles.editorCollapsed,
+          mobileView === "edit" ? styles.mobileShowEdit : styles.mobileShowPreview,
+        ].join(" ")}
+      >
+        <div id="edit-panel" className={`${styles.formPanel} app-chrome`}>
           <ClientManager clients={clients} onSave={updateClients} />
           {clientsError && <p className={styles.clientsError}>{clientsError}</p>}
 
@@ -394,6 +486,13 @@ export default function Home() {
             </div>
           </div>
 
+          <hr className="hairline" />
+
+          <div className={styles.section}>
+            <p className="eyebrow">Site photos</p>
+            <PhotoEditor photos={photos} onChange={setPhotos} saveError={photosSaveError} />
+          </div>
+
           <button type="button" className="btn btnPrimary btnBlock" onClick={handleDownload}>
             Download PDF
           </button>
@@ -409,10 +508,17 @@ export default function Home() {
           </div>
           <div className={styles.previewScroll} ref={previewScrollRef}>
             <div
-              className={`${styles.sheetWrap} sheet-wrap`}
-              style={{ transform: `scale(${scale})`, width: A4_WIDTH_PX }}
+              className={styles.sheetSizer}
+              style={{ width: A4_WIDTH_PX, height: sheetHeight ? sheetHeight * scale : undefined }}
             >
-              <InvoicePreview bill={bill} />
+              <div
+                ref={sheetWrapRef}
+                className={`${styles.sheetWrap} sheet-wrap`}
+                style={{ transform: `scale(${scale})`, width: A4_WIDTH_PX }}
+              >
+                <InvoicePreview bill={bill} />
+                <PhotoPages photos={photos} />
+              </div>
             </div>
           </div>
         </div>

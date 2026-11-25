@@ -1,0 +1,79 @@
+/* On screen each photo page mirrors the invoice sheet (A4 with the same
+   inset); in print the @page margin supplies the inset instead (see the
+   .photo-sheet rules in globals.css). */
+.sheet {
+  width: 210mm;
+  height: 297mm;
+  margin-top: 16px;
+  background: #ffffff;
+  color: #000000;
+  padding: 10mm 11mm;
+  box-sizing: border-box;
+  font-family: "Canva Sans", Arial, Helvetica, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.35;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.18), 0 0 0 1px var(--sheet-ring, transparent);
+}
+
+/* The box fills the page like the client's sample (A4: ~189 x 277mm inside
+   the 10mm/11mm page margins). --box-h drives every height below so the
+   whole layout scales together. */
+.box {
+  --box-h: 277mm;
+  --slot-h: calc((var(--box-h) - 3px) / 2);
+  height: var(--box-h);
+  border: 1.5px solid #000;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* In print the box is capped to the page area actually available (100vh in
+   paged media), minus a little slack. On A4 that's ~275mm; on Letter (which
+   the iPad can silently pick) or when iOS adds its own header/footer band,
+   the box shrinks to fit instead of spilling onto an extra page. Fixed mm
+   and vh values only: Safari's print engine mis-sizes flex/percentage
+   heights in paged media (see InvoicePreview). */
+@media print {
+  .box {
+    --box-h: min(275mm, calc(100vh - 2mm));
+  }
+}
+
+.slot {
+  height: var(--slot-h);
+  padding: 12mm 10mm 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.slotLower {
+  border-top: 1.5px solid #000;
+}
+
+.photoFrame {
+  height: calc(var(--slot-h) - 46mm);
+  text-align: center;
+  line-height: 0;
+}
+
+/* max-width/max-height instead of object-fit keeps the whole photo visible
+   (nothing cropped) and prints reliably in Safari. */
+.photo {
+  max-width: 100%;
+  max-height: calc(var(--slot-h) - 46mm);
+  width: auto;
+  height: auto;
+  vertical-align: top;
+}
+
+.caption {
+  margin-top: 13mm;
+}
+
+.caption p {
+  margin: 0;
+}
+
+.label {
+  font-weight: 700;
+}

@@ -25,6 +25,7 @@ Required env vars (in `.env.local`, pulled from Vercel): `MIDAS_APP_PASSWORD` (s
 ## Architecture
 
 - **Single page app.** `app/page.tsx` is one client component that holds all bill state. It renders the form (`ClientManager`, `ItemEditor`) and the live `InvoicePreview`. The preview is scaled with a CSS transform to fit the column (`A4_WIDTH_PX` plus a ResizeObserver).
+- **Layout:** wider than 900px is a collapsible edit sidebar ("Hide editor", remembered in localStorage) beside the preview, each scrolling separately while the page itself is fixed. At 900px and below it switches to a sticky Edit | Preview tab bar showing one screen at a time. Print CSS forces the preview to show and hides the form in every layout.
 - **Storage split:**
   - Saved clients (each with reusable `DisplayTemplate`s) are shared across devices. They are stored as a single JSON blob, `midas-clients.json`, in private Vercel Blob storage, read and written through `app/api/clients/route.ts` (GET, and PUT of the full array).
   - The draft bill, the last invoice serial, and the theme are per-device `localStorage` values (`lib/store.ts`). When a draft is loaded it is merged over `emptyBill()`, so new `Bill` fields need a default there.
@@ -34,6 +35,7 @@ Required env vars (in `.env.local`, pulled from Vercel): `MIDAS_APP_PASSWORD` (s
   - `money.ts` holds Indian-format money (`1,35,000.00`), amount-in-words (crore/lakh), financial-year invoice prefix (`2026-27/NN`, FY starts in April), and GST (CGST 9% + SGST 9%, or IGST 18%) in `calcBillTotals`, which both the preview and the form total use.
   - Billing periods: a span from the 1st of a month to the last day of a month bills as a whole number of months. Any other span is prorated at 30 days per month, counting both end dates, and labelled as days or "N month M days", never as decimal months.
   - An item's `amount` is `rate × months` automatically but can be overridden by hand.
+- **Site photos** (`lib/photos.ts`, `components/PhotoEditor.tsx`, `components/PhotoPages.tsx`) print after the invoice, 2 per page, each with Location/Size text. Uploads are downscaled to 1600px JPEG data URLs and the draft's photos are stored in IndexedDB on the device, since they are too big for localStorage. They are not on the server, and they stay until removed in the form.
 - **PDF is `window.print()`, with no PDF library.** Print rules are in the `@media print` block of `app/globals.css`: `.app-chrome` is hidden, `@page` is set to A4 with 10mm/11mm margins, and `.invoice-sheet` has a minimum height of 277mm. Bills with more than 3 items switch to the `dense` style.
 
 ## Print layout constraints (read before touching InvoicePreview)

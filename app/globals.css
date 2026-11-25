@@ -103,10 +103,14 @@ html {
   height: 100%;
 }
 
+/* clip (not hidden): hidden turns body into its own scroll container,
+   which breaks position: sticky (the phone Edit | Preview switch). hidden
+   stays as the fallback for browsers without clip. */
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -271,6 +275,11 @@ button {
   background: var(--accent-soft);
 }
 
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .btnDangerText {
   background: none;
   color: var(--danger);
@@ -311,6 +320,13 @@ a:focus-visible {
     display: none !important;
   }
 
+  /* Paper is always light: in dark mode color-scheme: dark makes the
+     browser paint the page margins dark in the PDF */
+  :root,
+  :root[data-theme] {
+    color-scheme: light !important;
+  }
+
   html,
   body {
     background: #fff !important;
@@ -333,6 +349,21 @@ a:focus-visible {
     width: auto !important;
     min-height: 277mm !important; /* 297mm page - 10mm top - 10mm bottom @page margin */
     padding: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Site-photo pages: each starts on a fresh page after the invoice. The
+     on-screen A4 inset and fixed 297mm height give way to the @page margin,
+     like .invoice-sheet above. */
+  .photo-sheet {
+    break-before: page;
+    page-break-before: always;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

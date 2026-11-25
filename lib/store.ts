@@ -6,6 +6,7 @@ const KEYS = {
   lastSerial: "midas.lastSerial",
   draft: "midas.draft",
   theme: "midas.theme",
+  editorOpen: "midas.editorOpen",
 } as const;
 
 function isBrowser(): boolean {
@@ -55,4 +56,13 @@ export function loadTheme(): Theme | null {
 
 export function saveTheme(theme: Theme): void {
   writeJson(KEYS.theme, theme);
+}
+
+// Whether the edit sidebar is open (side-by-side layout); defaults to open
+export function loadEditorOpen(): boolean {
+  return readJson<boolean>(KEYS.editorOpen, true);
+}
+
+export function saveEditorOpen(open: boolean): void {
+  writeJson(KEYS.editorOpen, open);
 }
